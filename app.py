@@ -6,10 +6,14 @@ import time
 
 app = Flask(__name__)
 
-DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
-STATE_FILE = os.path.join(DATA_DIR, 'state.json')
-os.makedirs(DATA_DIR, exist_ok=True)
+# ---------- 确保 data 目录存在 ----------
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
 
+STATE_FILE = os.path.join(DATA_DIR, 'state.json')
+
+# ---------- 成员名单（36人）----------
 MEMBER_NAMES = [
     '很润', '范清川', '两只小鼠', 'AeoI菜鸟', '蓝月亮',
     '别卷了呗', '玩家25192586', '京城安少', '駶八戒', '慢慢。',
@@ -24,6 +28,7 @@ MEMBER_NAMES = [
 TOTAL_MEMBERS = len(MEMBER_NAMES)
 MAX_WINNERS = 8
 
+# ---------- 状态管理 ----------
 def load_state():
     if os.path.exists(STATE_FILE):
         try:
@@ -61,23 +66,23 @@ def do_draw():
         if time.time() - start_time > 3:
             return False, None, '系统繁忙，请稍后再试'
         time.sleep(0.1)
-    
+
     with open(lock_file, 'w') as f:
         f.write(str(os.getpid()))
-    
+
     try:
         state = load_state()
         if state['remaining'] <= 0:
             return False, None, '本周奖励名额已全部抽完！'
-        
+
         winner_indices = set(state['winner_indices'])
         candidates = [i for i in range(TOTAL_MEMBERS) if i not in winner_indices]
         if not candidates:
             return False, None, '所有成员都已中奖！'
-        
+
         chosen_idx = random.choice(candidates)
         chosen_name = MEMBER_NAMES[chosen_idx]
-        
+
         state['winner_indices'].append(chosen_idx)
         state['winners'].append(chosen_name)
         state['history'].append(chosen_name)
@@ -91,7 +96,7 @@ def do_draw():
 @app.route('/')
 def index():
     state = load_state()
-    return render_template('index.html', 
+    return render_template('index.html',
                          members=MEMBER_NAMES,
                          winners=state['winners'],
                          remaining=state['remaining'],
