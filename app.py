@@ -6,10 +6,9 @@ import time
 
 app = Flask(__name__)
 
-# ---------- 确保 data 目录存在 ----------
-DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
-if not os.path.exists(DATA_DIR):
-    os.makedirs(DATA_DIR)
+# ---------- 使用 /tmp 目录（Railway 可写） ----------
+DATA_DIR = '/tmp/lottery_data'
+os.makedirs(DATA_DIR, exist_ok=True)
 
 STATE_FILE = os.path.join(DATA_DIR, 'state.json')
 
@@ -128,6 +127,4 @@ def api_reset():
     return jsonify({'success': True, 'message': '已重置，开始新一周！'})
 
 if __name__ == '__main__':
-    if not os.path.exists(STATE_FILE):
-        reset_state()
     app.run(host='0.0.0.0', port=5000, debug=False)
